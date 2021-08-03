@@ -696,39 +696,4 @@ public class Util {
         }
         return count;
     }
-
-    public static void updateIslandRange(User user) {
-        plugin.getIWM().getOverWorlds().stream()
-                .filter(world -> plugin.getIslands().isOwner(world, user.getUniqueId()))
-                .forEach(world -> {
-                    Island island = plugin.getIslands().getIsland(world, user);
-                    if (island != null) {
-                        // Check if new owner has a different range permission than the island size
-                        int range = user.getPermissionValue(plugin.getIWM().getAddon(island.getWorld()).map(GameModeAddon::getPermissionPrefix).orElse("") + "island.range", island.getProtectionRange());
-                        // Range cannot be greater than the island distance * 2
-                        range = Math.min(range, 2 * plugin.getIWM().getIslandDistance(island.getWorld()));
-                        // Range can go up or down
-                        if (range != island.getProtectionRange()) {
-                            user.sendMessage("commands.admin.setrange.range-updated", TextVariables.NUMBER, String.valueOf(range));
-                            plugin.log("Island protection range changed from " + island.getProtectionRange() + " to "
-                                    + range + " for " + user.getName() + " due to permission.");
-
-                            // Get old range for event
-                            int oldRange = island.getProtectionRange();
-
-                            island.setProtectionRange(range);
-
-                            // Call Protection Range Change event. Does not support canceling.
-                            IslandEvent.builder()
-                                    .island(island)
-                                    .location(island.getProtectionCenter())
-                                    .reason(IslandEvent.Reason.RANGE_CHANGE)
-                                    .involvedPlayer(user.getUniqueId())
-                                    .admin(true)
-                                    .protectionRange(range, oldRange)
-                                    .build();
-                        }
-                    }
-                });
-    }
 }

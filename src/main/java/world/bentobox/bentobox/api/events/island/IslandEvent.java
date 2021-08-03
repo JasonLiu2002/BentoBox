@@ -48,6 +48,20 @@ public class IslandEvent extends IslandBaseEvent {
     }
 
     /**
+     * Fired every time an island event occurs. For developers who just want one event and will use an enum to track the reason
+     * @param island - the island involved in the event
+     * @param playerUUID - the player's UUID involved in the event
+     * @param admin - true if this is due to an admin event
+     * @param location - location of event
+     * @param reason - see {@link #getReason()}
+     * @param isAsync - if the event should fire asynchronously
+     */
+    public IslandEvent(Island island, UUID playerUUID, boolean admin, Location location, Reason reason, boolean isAsync) {
+        super(island, playerUUID, admin, location, isAsync);
+        this.reason = reason;
+    }
+
+    /**
      * @return the reason
      */
     public Reason getReason() {
@@ -855,8 +869,36 @@ public class IslandEvent extends IslandBaseEvent {
             };
         }
 
+        private IslandBaseEvent getEvent(boolean isAsync) {
+            return switch (reason) {
+                case EXPEL -> new world.bentobox.bentobox.api.events.island.IslandExpelEvent(island, player, admin, location);
+                case BAN -> new world.bentobox.bentobox.api.events.island.IslandBanEvent(island, player, admin, location);
+                case PRECREATE -> new world.bentobox.bentobox.api.events.island.IslandPreCreateEvent(player);
+                case CREATE -> new world.bentobox.bentobox.api.events.island.IslandCreateEvent(island, player, admin, location, blueprintBundle);
+                case CREATED -> new world.bentobox.bentobox.api.events.island.IslandCreatedEvent(island, player, admin, location);
+                case DELETE -> new world.bentobox.bentobox.api.events.island.IslandDeleteEvent(island, player, admin, location);
+                case DELETE_CHUNKS -> new world.bentobox.bentobox.api.events.island.IslandDeleteChunksEvent(island, player, admin, location, deletedIslandInfo);
+                case DELETED -> new world.bentobox.bentobox.api.events.island.IslandDeletedEvent(island, player, admin, location, deletedIslandInfo);
+                case ENTER -> new world.bentobox.bentobox.api.events.island.IslandEnterEvent(island, player, admin, location, oldIsland, rawEvent);
+                case EXIT -> new world.bentobox.bentobox.api.events.island.IslandExitEvent(island, player, admin, location, oldIsland, rawEvent);
+                case LOCK -> new world.bentobox.bentobox.api.events.island.IslandLockEvent(island, player, admin, location);
+                case RESET -> new world.bentobox.bentobox.api.events.island.IslandResetEvent(island, player, admin, location, blueprintBundle, oldIsland);
+                case RESETTED -> new world.bentobox.bentobox.api.events.island.IslandResettedEvent(island, player, admin, location, oldIsland);
+                case UNBAN -> new world.bentobox.bentobox.api.events.island.IslandUnbanEvent(island, player, admin, location);
+                case UNLOCK -> new world.bentobox.bentobox.api.events.island.IslandUnlockEvent(island, player, admin, location);
+                case REGISTERED -> new world.bentobox.bentobox.api.events.island.IslandRegisteredEvent(island, player, admin, location);
+                case UNREGISTERED -> new world.bentobox.bentobox.api.events.island.IslandUnregisteredEvent(island, player, admin, location);
+                case RANGE_CHANGE -> new world.bentobox.bentobox.api.events.island.IslandProtectionRangeChangeEvent(island, player, admin, location, newRange, oldRange, isAsync);
+                case PRECLEAR -> new world.bentobox.bentobox.api.events.island.IslandPreclearEvent(island, player, admin, location, oldIsland);
+                case RESERVED -> new world.bentobox.bentobox.api.events.island.IslandReservedEvent(island, player, admin, location);
+                case RANK_CHANGE -> new world.bentobox.bentobox.api.events.island.IslandRankChangeEvent(island, player, admin, location, oldRank, newRank);
+                case NEW_ISLAND -> new IslandNewIslandEvent(island, player, admin, location);
+                default -> new world.bentobox.bentobox.api.events.island.IslandGeneralEvent(island, player, admin, location);
+            };
+        }
+
         /**
-         * Builds and fires the deprecated and new IslandEvent.
+         * Builds and fires the deprecated and new IslandEvent. Synchronous by default
          * @return deprecated event. To obtain the new event use {@link IslandBaseEvent#getNewEvent()}
          */
         public IslandBaseEvent build() {
@@ -864,6 +906,23 @@ public class IslandEvent extends IslandBaseEvent {
             Bukkit.getPluginManager().callEvent(new IslandEvent(island, player, admin, location, reason));
             // Generate new event
             IslandBaseEvent newEvent = getEvent();
+            Bukkit.getPluginManager().callEvent(newEvent);
+            // Generate deprecated events
+            IslandBaseEvent e = getDeprecatedEvent();
+            e.setNewEvent(newEvent);
+            Bukkit.getPluginManager().callEvent(e);
+            return e;
+        }
+
+        /**
+         * Builds and fires the deprecated and new IslandEvent.
+         * @return deprecated event. To obtain the new event use {@link IslandBaseEvent#getNewEvent()}
+         */
+        public IslandBaseEvent build(boolean isAsync) {
+            // Call the generic event for developers who just want one event and use the Reason enum
+            Bukkit.getPluginManager().callEvent(new IslandEvent(island, player, admin, location, reason, isAsync));
+            // Generate new event
+            IslandBaseEvent newEvent = getEvent(isAsync);
             Bukkit.getPluginManager().callEvent(newEvent);
             // Generate deprecated events
             IslandBaseEvent e = getDeprecatedEvent();

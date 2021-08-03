@@ -32,6 +32,15 @@ public abstract class IslandBaseEvent extends BentoBoxEvent implements Cancellab
         rawEvent = null;
     }
 
+    protected IslandBaseEvent(Island island, boolean isAsync) {
+        super(isAsync);
+        this.island = island;
+        playerUUID = island == null ? null : island.getOwner();
+        admin = false;
+        location = island == null ? null : island.getCenter();
+        rawEvent = null;
+    }
+
     /**
      * @param island - island
      * @param playerUUID - the player's UUID
@@ -52,10 +61,43 @@ public abstract class IslandBaseEvent extends BentoBoxEvent implements Cancellab
      * @param playerUUID - the player's UUID
      * @param admin - true if ths is due to an admin event
      * @param location - the location
+     * @param isAsync - if the event should fire asynchronously
+     */
+    protected IslandBaseEvent(Island island, UUID playerUUID, boolean admin, Location location, boolean isAsync) {
+        super(isAsync);
+        this.island = island;
+        this.playerUUID = playerUUID;
+        this.admin = admin;
+        this.location = location;
+        rawEvent = null;
+    }
+
+    /**
+     * @param island - island
+     * @param playerUUID - the player's UUID
+     * @param admin - true if ths is due to an admin event
+     * @param location - the location
      * @param rawEvent - the raw event
      */
     protected IslandBaseEvent(Island island, UUID playerUUID, boolean admin, Location location, Event rawEvent) {
         super();
+        this.island = island;
+        this.playerUUID = playerUUID;
+        this.admin = admin;
+        this.location = location;
+        this.rawEvent = rawEvent;
+    }
+
+    /**
+     * @param island - island
+     * @param playerUUID - the player's UUID
+     * @param admin - true if ths is due to an admin event
+     * @param location - the location
+     * @param rawEvent - the raw event
+     * @param isAsync - if the event should fire asynchronously
+     */
+    protected IslandBaseEvent(Island island, UUID playerUUID, boolean admin, Location location, Event rawEvent, boolean isAsync) {
+        super(isAsync);
         this.island = island;
         this.playerUUID = playerUUID;
         this.admin = admin;

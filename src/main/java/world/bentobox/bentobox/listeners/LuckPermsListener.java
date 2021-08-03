@@ -32,17 +32,19 @@ public class LuckPermsListener implements Listener {
 
 	public void onNodeAdd(NodeAddEvent e) {
 		if (!e.isUser()) return;
-		User u = (User) e.getTarget();
-		Player p = plugin.getServer().getPlayer(u.getUniqueId());
+		var luckpermsUser = (net.luckperms.api.model.user.User) e.getTarget();
+		Player p = plugin.getServer().getPlayer(luckpermsUser.getUniqueId());
+
+		User u = User.getInstance(p);
 
 		// Update the island range of the islands the player owns
-		Util.updateIslandRange(u);
+		updateIslandRange(u);
 
 		// Set island max members and homes based on permissions if this player is the owner of an island
 		plugin.getIWM().getOverWorlds().stream()
-				.map(w -> plugin.getIslands().getIsland(w, u.getUniqueId()))
+				.map(w -> plugin.getIslands().getIsland(w, luckpermsUser.getUniqueId()))
 				.filter(Objects::nonNull)
-				.filter(i -> u.getUniqueId().equals(i.getOwner()))
+				.filter(i -> luckpermsUser.getUniqueId().equals(i.getOwner()))
 				.forEach(i -> {
 					plugin.getIslands().getMaxMembers(i, RanksManager.MEMBER_RANK);
 					plugin.getIslands().getMaxMembers(i, RanksManager.COOP_RANK);
@@ -51,4 +53,38 @@ public class LuckPermsListener implements Listener {
 				});
 	}
 
+	private void updateIslandRange(User user) {
+		plugin.getIWM().getOverWorlds().stream()
+				.filter(world -> plugin.getIslands().isOwner(world, user.getUniqueId()))
+				.forEach(world -> {
+					Island island = plugin.getIslands().getIsland(world, user);
+					if (island != null) {
+						// Check if new owner has a different range permission than the island size
+						int range = user.getPermissionValue(plugin.getIWM().getAddon(island.getWorld()).map(GameModeAddon::getPermissionPrefix).orElse("") + "island.range", island.getProtectionRange());
+						// Range cannot be greater than the island distance * 2
+						range = Math.min(range, 2 * plugin.getIWM().getIslandDistance(island.getWorld()));
+						// Range can go up or down
+						if (range != island.getProtectionRange()) {
+							user.sendMessage("commands.admin.setrange.range-updated", TextVariables.NUMBER, String.valueOf(range));
+							plugin.log("Island protection range changed from " + island.getProtectionRange() + " to "
+									+ range + " for " + user.getName() + " due to permission.");
+
+							// Get old range for event
+							int oldRange = island.getProtectionRange();
+
+							island.setProtectionRange(range);
+
+							// Call Protection Range Change event. Does not support canceling.
+							IslandEvent.builder()
+									.island(island)
+									.location(island.getProtectionCenter())
+									.reason(IslandEvent.Reason.RANGE_CHANGE)
+									.involvedPlayer(user.getUniqueId())
+									.admin(true)
+									.protectionRange(range, oldRange)
+									.build(true);
+						}
+					}
+				});
+	}
 }

@@ -51,6 +51,24 @@ public class IslandProtectionRangeChangeEvent extends IslandBaseEvent {
         this.oldRange = oldRange;
     }
 
+    /**
+     * Constructor IslandProtectionRangeChange creates a new IslandProtectionRangeChange instance.
+     *
+     * @param island of type Island
+     * @param player of type UUID
+     * @param admin of type boolean
+     * @param location of type Location
+     * @param newRange of type int
+     * @param oldRange of type int
+     * @param isAsync of type boolean
+     */
+    IslandProtectionRangeChangeEvent(Island island, UUID player, boolean admin, Location location, int newRange, int oldRange, boolean isAsync) {
+        super(island, player, admin, location, isAsync);
+        System.out.println("ASYNC ISLAND PROTECTION RANGE CHANGE EVENT");
+        this.newRange = newRange;
+        this.oldRange = oldRange;
+    }
+
 
     /**
      * This method returns the newRange value.

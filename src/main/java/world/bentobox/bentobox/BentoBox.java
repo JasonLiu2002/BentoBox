@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import net.luckperms.api.LuckPerms;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.generator.ChunkGenerator;
@@ -25,13 +26,7 @@ import world.bentobox.bentobox.hooks.MultiverseCoreHook;
 import world.bentobox.bentobox.hooks.VaultHook;
 import world.bentobox.bentobox.hooks.WorldEditHook;
 import world.bentobox.bentobox.hooks.placeholders.PlaceholderAPIHook;
-import world.bentobox.bentobox.listeners.BannedCommands;
-import world.bentobox.bentobox.listeners.BlockEndDragon;
-import world.bentobox.bentobox.listeners.DeathListener;
-import world.bentobox.bentobox.listeners.JoinLeaveListener;
-import world.bentobox.bentobox.listeners.PanelListenerManager;
-import world.bentobox.bentobox.listeners.PortalTeleportationListener;
-import world.bentobox.bentobox.listeners.StandardSpawnProtectionListener;
+import world.bentobox.bentobox.listeners.*;
 import world.bentobox.bentobox.managers.AddonsManager;
 import world.bentobox.bentobox.managers.BlueprintsManager;
 import world.bentobox.bentobox.managers.CommandsManager;
@@ -297,6 +292,10 @@ public class BentoBox extends JavaPlugin {
         manager.registerEvents(new DeathListener(this), this);
         // Island Delete Manager
         islandDeletionManager = new IslandDeletionManager(this);
+        // LuckPerms Listener
+        if (Bukkit.getServicesManager().getRegistration(LuckPerms.class) != null) {
+            manager.registerEvents(new LuckPermsListener(this), this);
+        }
         manager.registerEvents(islandDeletionManager, this);
     }
 

@@ -88,6 +88,8 @@ public class BentoBox extends JavaPlugin {
 
     private boolean shutdown;
 
+    LuckPermsListener luckPermsListener;
+
     @Override
     public void onEnable(){
         if (!ServerCompatibility.getInstance().checkCompatibility().isCanLaunch()) {
@@ -294,7 +296,7 @@ public class BentoBox extends JavaPlugin {
         islandDeletionManager = new IslandDeletionManager(this);
         // LuckPerms Listener
         if (Bukkit.getServicesManager().getRegistration(LuckPerms.class) != null) {
-            manager.registerEvents(new LuckPermsListener(this), this);
+            luckPermsListener = new LuckPermsListener(this);
         }
         manager.registerEvents(islandDeletionManager, this);
     }
